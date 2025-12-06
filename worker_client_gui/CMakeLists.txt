@@ -5,8 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt6 or Qt5
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Network)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Widgets Network)
+if(QT_FOUND)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Network)
+else()
+    message(FATAL_ERROR "Qt not found. Please install Qt 6.x or Qt 5.x")
+endif()
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)

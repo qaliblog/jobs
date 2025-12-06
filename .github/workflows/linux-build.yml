@@ -80,7 +80,7 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.5.0'
+        version: '6.6.0'
         modules: 'qtbase qttools'
         arch: 'gcc_64'
         
