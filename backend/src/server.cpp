@@ -278,7 +278,7 @@ void Server::handleRequest(int client_fd, const std::string& request, std::strin
             response = "HTTP/1.1 400 Bad Request\r\n\r\n";
         }
     } else if (request.find("GET /api/requests") != std::string::npos) {
-        response = processGetPendingRequests();
+        response = processPendingRequests();
     } else if (request.find("POST /api/requests/accept") != std::string::npos) {
         size_t body_start = request.find("\r\n\r\n");
         if (body_start != std::string::npos) {
@@ -513,7 +513,7 @@ std::string Server::processDiscovery() {
     return json.str();
 }
 
-std::string Server::processRecruitRequest(const std::string& json, const std::string& /* clientAddress */) {
+std::string Server::processRecruitRequest(const std::string& json, const std::string& clientAddress) {
     // Someone wants to recruit this server as a worker
     std::string requesterId = extractJsonValue(json, "requesterId");
     std::string requesterName = extractJsonValue(json, "requesterName");
@@ -523,13 +523,14 @@ std::string Server::processRecruitRequest(const std::string& json, const std::st
     // Store the request for user to accept/reject
     {
         std::lock_guard<std::mutex> lock(requests_mutex_);
-        RecruitRequest req;
-        req.requesterId = requesterId;
-        req.requesterName = requesterName;
-        req.requesterAddress = requesterAddress;
-        req.requesterPort = requesterPort;
-        req.timestamp = std::time(nullptr);
-        pending_requests_[requesterId] = req;
+        ConnectionRequest req;
+        req.id = requesterId;
+        req.deviceName = requesterName;
+        req.deviceAddress = requesterAddress;
+        req.deviceType = "unknown"; // Could extract from request
+        req.requestType = "recruit";
+        req.timestamp = std::chrono::system_clock::now();
+        pending_requests_.push_back(req);
     }
     
     std::ostringstream response;
