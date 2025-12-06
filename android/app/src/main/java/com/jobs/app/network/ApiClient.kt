@@ -1,6 +1,7 @@
 package com.jobs.app.network
 
 import com.jobs.app.data.Task
+import com.jobs.app.viewmodel.ConnectionRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
