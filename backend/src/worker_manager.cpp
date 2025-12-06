@@ -1,4 +1,5 @@
 #include "worker_manager.h"
+#include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <chrono>

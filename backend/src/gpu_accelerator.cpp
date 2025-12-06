@@ -32,7 +32,7 @@ void GpuAccelerator::cleanupGpu() {
     // Cleanup GPU resources
 }
 
-std::string GpuAccelerator::processTask(const std::string& taskData, float complexity) {
+std::string GpuAccelerator::processTask(const std::string& /* taskData */, float complexity) {
     if (!available_) {
         return "GPU not available";
     }
