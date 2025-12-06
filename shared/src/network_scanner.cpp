@@ -150,7 +150,11 @@ void NetworkScanner::scanNetwork(int port) {
                 send(sock, request.c_str(), request.length(), 0);
                 
                 char buffer[1024] = {0};
+#ifdef _WIN32
+                int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
+#else
                 ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
+#endif
                 
                 if (bytes > 0) {
                     std::string response(buffer, bytes);
