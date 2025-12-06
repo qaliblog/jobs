@@ -43,8 +43,12 @@ set(UI_FILES
     ui/mainwindow.ui
 )
 
+set(RESOURCE_FILES
+    resources/resources.qrc
+)
+
 # Create executable
-add_executable(jobs_worker_gui ${SOURCES} ${HEADERS} ${UI_FILES})
+add_executable(jobs_worker_gui ${SOURCES} ${HEADERS} ${UI_FILES} ${RESOURCE_FILES})
 
 # Link Qt libraries
 target_link_libraries(jobs_worker_gui

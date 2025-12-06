@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include <QMessageBox>
 #include <QApplication>
+#include <QIcon>
+#include <QFile>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -13,6 +15,22 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("Jobs Worker - Distributed Computing");
     setMinimumSize(800, 600);
     resize(1000, 700);
+    
+    // Set window icon from resources
+    QIcon windowIcon(":/icons/icon-512.png");
+    if (windowIcon.isNull()) {
+        // Fallback to file system
+        if (QFile::exists("../icons/web/icon-512.png")) {
+            windowIcon.addFile("../icons/web/icon-512.png");
+        } else if (QFile::exists("icons/web/icon-512.png")) {
+            windowIcon.addFile("icons/web/icon-512.png");
+        } else if (QFile::exists("../../icons/web/icon-512.png")) {
+            windowIcon.addFile("../../icons/web/icon-512.png");
+        }
+    }
+    if (!windowIcon.isNull()) {
+        setWindowIcon(windowIcon);
+    }
 }
 
 MainWindow::~MainWindow()

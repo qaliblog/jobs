@@ -1,5 +1,7 @@
 #include <QApplication>
 #include <QStyleFactory>
+#include <QIcon>
+#include <QFile>
 #include "mainwindow.h"
 
 int main(int argc, char *argv[])
@@ -10,6 +12,20 @@ int main(int argc, char *argv[])
     app.setApplicationName("Jobs Worker");
     app.setApplicationVersion("1.0");
     app.setOrganizationName("Jobs");
+    
+    // Set application icon from resources
+    QIcon appIcon(":/icons/icon-512.png");
+    if (appIcon.isNull()) {
+        // Fallback to file system
+        if (QFile::exists("../icons/web/icon-512.png")) {
+            appIcon.addFile("../icons/web/icon-512.png");
+        } else if (QFile::exists("icons/web/icon-512.png")) {
+            appIcon.addFile("icons/web/icon-512.png");
+        }
+    }
+    if (!appIcon.isNull()) {
+        app.setWindowIcon(appIcon);
+    }
     
     // Set modern style
     app.setStyle(QStyleFactory::create("Fusion"));
