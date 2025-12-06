@@ -206,6 +206,13 @@ class MainViewModel : ViewModel() {
     fun startServerMode() {
         // Start embedded server (would need to implement)
         _uiState.value = _uiState.value.copy(isServerMode = true)
+        // Start polling for requests
+        viewModelScope.launch {
+            while (_uiState.value.isServerMode) {
+                refreshRequests()
+                delay(5000) // Refresh every 5 seconds
+            }
+        }
     }
     
     fun stopServerMode() {
