@@ -280,26 +280,11 @@ fun DeviceCard(device: DiscoveredDevice, viewModel: MainViewModel) {
                 text = "${device.type} @ ${device.address}:${device.port}",
                 style = MaterialTheme.typography.bodySmall
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Button(
+                onClick = { viewModel.recruitDevice(device) },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                if (device.isServer) {
-                    Button(
-                        onClick = { viewModel.recruitDevice(device) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Recruit")
-                    }
-                }
-                if (device.isWorker) {
-                    Button(
-                        onClick = { viewModel.requestToWork(device) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Work For")
-                    }
-                }
+                Text("Recruit")
             }
         }
     }

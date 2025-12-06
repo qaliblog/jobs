@@ -8,6 +8,42 @@
 #include <QListWidgetItem>
 #include <QThread>
 #include <QTimer>
+#include <QThreadPool>
+#include <QRunnable>
+#include <QMutex>
+#include <QApplication>
+
+// Worker class for parallel scanning
+class ScanWorker : public QRunnable {
+public:
+    ScanWorker(const QString& ip, int port, NetworkScannerWidget* widget)
+        : ip_(ip), port_(port), widget_(widget) {}
+    
+    void run() override {
+        QTcpSocket socket;
+        socket.connectToHost(ip_, port_);
+        
+        if (socket.waitForConnected(100)) { // Fast timeout
+            QString request = QString("GET /api/discover HTTP/1.1\r\nHost: %1:%2\r\n\r\n")
+                             .arg(ip_).arg(port_);
+            socket.write(request.toUtf8());
+            
+            if (socket.waitForReadyRead(200)) {
+                QByteArray response = socket.readAll();
+                QMetaObject::invokeMethod(widget_, "parseDiscoveryResponse",
+                    Qt::QueuedConnection,
+                    Q_ARG(QByteArray, response),
+                    Q_ARG(QString, ip_),
+                    Q_ARG(int, port_));
+            }
+        }
+    }
+    
+private:
+    QString ip_;
+    int port_;
+    NetworkScannerWidget* widget_;
+};
 
 NetworkScannerWidget::NetworkScannerWidget(QWidget *parent)
     : QWidget(parent)
@@ -34,18 +70,15 @@ void NetworkScannerWidget::setupUI()
     stopButton = new QPushButton("Stop", this);
     refreshButton = new QPushButton("Refresh", this);
     recruitButton = new QPushButton("Recruit Selected", this);
-    workForButton = new QPushButton("Work For Selected", this);
     
     stopButton->setEnabled(false);
     recruitButton->setEnabled(false);
-    workForButton->setEnabled(false);
     
     buttonLayout->addWidget(scanButton);
     buttonLayout->addWidget(stopButton);
     buttonLayout->addWidget(refreshButton);
     buttonLayout->addStretch();
     buttonLayout->addWidget(recruitButton);
-    buttonLayout->addWidget(workForButton);
     
     // Status label
     statusLabel = new QLabel("Ready to scan", this);
@@ -72,12 +105,10 @@ void NetworkScannerWidget::setupUI()
     connect(stopButton, &QPushButton::clicked, this, &NetworkScannerWidget::onStopClicked);
     connect(refreshButton, &QPushButton::clicked, this, &NetworkScannerWidget::onRefreshClicked);
     connect(recruitButton, &QPushButton::clicked, this, &NetworkScannerWidget::onRecruitClicked);
-    connect(workForButton, &QPushButton::clicked, this, &NetworkScannerWidget::onWorkForClicked);
     connect(deviceList, &QListWidget::itemDoubleClicked, this, &NetworkScannerWidget::onDeviceDoubleClicked);
     connect(deviceList, &QListWidget::itemSelectionChanged, [this]() {
         bool hasSelection = deviceList->currentItem() != nullptr;
         recruitButton->setEnabled(hasSelection);
-        workForButton->setEnabled(hasSelection);
     });
 }
 
@@ -107,7 +138,7 @@ void NetworkScannerWidget::onDeviceDoubleClicked(QListWidgetItem* /* item */)
 {
     DiscoveredDevice device = getSelectedDevice();
     if (!device.id.isEmpty()) {
-        emit workRequested(device);
+        emit recruitRequested(device);
     }
 }
 
@@ -116,14 +147,6 @@ void NetworkScannerWidget::onRecruitClicked()
     DiscoveredDevice device = getSelectedDevice();
     if (!device.id.isEmpty()) {
         emit recruitRequested(device);
-    }
-}
-
-void NetworkScannerWidget::onWorkForClicked()
-{
-    DiscoveredDevice device = getSelectedDevice();
-    if (!device.id.isEmpty()) {
-        emit workRequested(device);
     }
 }
 
@@ -142,8 +165,8 @@ void NetworkScannerWidget::scanNetwork()
     discoveredDevices.clear();
     statusLabel->setText("Scanning network...");
     
-    scanTimer->start(1000);
-    connect(scanTimer, &QTimer::timeout, this, &NetworkScannerWidget::updateScanProgress);
+    scanTimer->start(500);
+    connect(scanTimer, &QTimer::timeout, this, &NetworkScannerWidget::updateScanProgress, Qt::UniqueConnection);
     
     // Get local network prefix
     QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
@@ -155,7 +178,10 @@ void NetworkScannerWidget::scanNetwork()
             QString ip = address.toString();
             int lastDot = ip.lastIndexOf('.');
             if (lastDot != -1) {
-                networkPrefixes.append(ip.left(lastDot + 1));
+                QString prefix = ip.left(lastDot + 1);
+                if (!networkPrefixes.contains(prefix)) {
+                    networkPrefixes.append(prefix);
+                }
             }
         }
     }
@@ -164,8 +190,12 @@ void NetworkScannerWidget::scanNetwork()
         networkPrefixes << "192.168.1." << "192.168.0." << "10.0.0.";
     }
     
-    // Scan network in background thread (simplified - should use QThread)
-    QTimer::singleShot(0, [this, networkPrefixes]() {
+    // Use QThreadPool for parallel scanning
+    QThreadPool::globalInstance()->setMaxThreadCount(50); // Parallel connections
+    
+    // Scan in background using thread pool
+    QThread::create([this, networkPrefixes]() {
+        int totalScanned = 0;
         for (const QString &prefix : networkPrefixes) {
             if (!isScanning) break;
             
@@ -175,32 +205,30 @@ void NetworkScannerWidget::scanNetwork()
                 QString ip = prefix + QString::number(i);
                 int port = 8080;
                 
-                QTcpSocket *socket = new QTcpSocket(this);
-                socket->connectToHost(ip, port);
+                ScanWorker* worker = new ScanWorker(ip, port, this);
+                QThreadPool::globalInstance()->start(worker);
+                totalScanned++;
                 
-                if (socket->waitForConnected(200)) {
-                    QString request = QString("GET /api/discover HTTP/1.1\r\nHost: %1:%2\r\n\r\n")
-                                     .arg(ip).arg(port);
-                    socket->write(request.toUtf8());
-                    
-                    if (socket->waitForReadyRead(500)) {
-                        QByteArray response = socket->readAll();
-                        parseDiscoveryResponse(response, ip, port);
-                    }
+                // Small delay to prevent overwhelming
+                if (totalScanned % 10 == 0) {
+                    QThread::msleep(5);
                 }
-                
-                socket->deleteLater();
-                QThread::msleep(10); // Small delay
             }
         }
         
-        isScanning = false;
-        scanButton->setEnabled(true);
-        stopButton->setEnabled(false);
-        scanProgress->setVisible(false);
-        scanTimer->stop();
-        statusLabel->setText(QString("Scan complete. Found %1 devices").arg(discoveredDevices.size()));
-    });
+        // Wait for all workers to complete
+        QThreadPool::globalInstance()->waitForDone(5000);
+        
+        // Update UI in main thread
+        QMetaObject::invokeMethod(this, [this]() {
+            isScanning = false;
+            scanButton->setEnabled(true);
+            stopButton->setEnabled(false);
+            scanProgress->setVisible(false);
+            scanTimer->stop();
+            statusLabel->setText(QString("Scan complete. Found %1 devices").arg(discoveredDevices.size()));
+        }, Qt::QueuedConnection);
+    })->start();
 }
 
 void NetworkScannerWidget::parseDiscoveryResponse(const QByteArray& response, const QString& address, int port)
@@ -230,7 +258,9 @@ void NetworkScannerWidget::parseDiscoveryResponse(const QByteArray& response, co
 
 void NetworkScannerWidget::addDiscoveredDevice(const DiscoveredDevice& device)
 {
-    // Check if already exists
+    // Check if already exists (thread-safe)
+    QMutexLocker locker(&devicesMutex);
+    
     for (const DiscoveredDevice &existing : discoveredDevices) {
         if (existing.address == device.address && existing.port == device.port) {
             return;
@@ -260,4 +290,3 @@ DiscoveredDevice NetworkScannerWidget::getSelectedDevice()
     }
     return DiscoveredDevice();
 }
-

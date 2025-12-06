@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTimer>
+#include <QMutex>
 
 struct DiscoveredDevice {
     QString id;
@@ -31,7 +32,6 @@ public:
 signals:
     void deviceSelected(const DiscoveredDevice& device);
     void recruitRequested(const DiscoveredDevice& device);
-    void workRequested(const DiscoveredDevice& device);
 
 private slots:
     void onScanClicked();
@@ -39,21 +39,21 @@ private slots:
     void onRefreshClicked();
     void onDeviceDoubleClicked(QListWidgetItem* item);
     void onRecruitClicked();
-    void onWorkForClicked();
     void updateScanProgress();
+
+public slots:
+    void parseDiscoveryResponse(const QByteArray& response, const QString& address, int port);
 
 private:
     void setupUI();
     void scanNetwork();
     void addDiscoveredDevice(const DiscoveredDevice& device);
     DiscoveredDevice getSelectedDevice();
-    void parseDiscoveryResponse(const QByteArray& response, const QString& address, int port);
     
     QPushButton *scanButton;
     QPushButton *stopButton;
     QPushButton *refreshButton;
     QPushButton *recruitButton;
-    QPushButton *workForButton;
     QListWidget *deviceList;
     QLabel *statusLabel;
     QProgressBar *scanProgress;
@@ -61,6 +61,7 @@ private:
     
     bool isScanning;
     QList<DiscoveredDevice> discoveredDevices;
+    QMutex devicesMutex;
 };
 
 #endif // NETWORK_SCANNER_WIDGET_H

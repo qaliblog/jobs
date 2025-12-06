@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.CoroutineScope
 import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
