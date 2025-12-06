@@ -213,7 +213,11 @@ bool WorkerClient::sendHttpRequest(const std::string& method, const std::string&
     send(sock, requestStr.c_str(), requestStr.length(), 0);
     
     char buffer[8192] = {0};
+#ifdef _WIN32
+    int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
+#else
     ssize_t bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
+#endif
     
     if (bytesRead > 0) {
         response = std::string(buffer, bytesRead);
