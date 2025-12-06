@@ -113,7 +113,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                             viewModel.scanQRCode()
                             // Request camera permission and launch scanner
                             if (cameraPermissionState.status.isGranted) {
-                                qrCodeLauncher.launch(ScanOptions().setDesiredBarcodeFormats(BarcodeFormat.QR_CODE))
+                                qrCodeLauncher.launch(ScanOptions().setDesiredBarcodeFormats("QR_CODE"))
                             } else {
                                 cameraPermissionState.launchPermissionRequest()
                             }
