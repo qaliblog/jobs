@@ -137,7 +137,11 @@ void Server::serverLoop() {
     
     while (running_) {
         sockaddr_in client_address{};
+#ifdef _WIN32
+        int addr_len = sizeof(client_address);
+#else
         socklen_t addr_len = sizeof(client_address);
+#endif
         
         int client_fd = accept(server_fd, (struct sockaddr*)&client_address, &addr_len);
         if (client_fd < 0) {
@@ -178,7 +182,11 @@ void Server::handleClient(int client_fd, sockaddr_in client_address) {
         std::string response;
         
         char client_ip[INET_ADDRSTRLEN];
+#ifdef _WIN32
+        InetNtopA(AF_INET, &(client_address.sin_addr), client_ip, INET_ADDRSTRLEN);
+#else
         inet_ntop(AF_INET, &(client_address.sin_addr), client_ip, INET_ADDRSTRLEN);
+#endif
         
         handleRequest(client_fd, request, response);
         
