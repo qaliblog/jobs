@@ -1,0 +1,110 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - 'worker_client/**'
+      - 'worker_client_gui/**'
+      - '.github/workflows/windows-build.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - 'worker_client/**'
+      - 'worker_client_gui/**'
+      - '.github/workflows/windows-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-backend:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        choco install cmake -y
+        choco install openssl -y
+        
+    - name: Build backend
+      working-directory: backend
+      shell: cmd
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake --build . --config Release
+        
+    - name: Upload backend binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-backend
+        path: backend/build/Release/jobs_backend.exe
+        retention-days: 30
+        
+  build-worker:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        choco install cmake -y
+        choco install openssl -y
+        
+    - name: Build worker client
+      working-directory: worker_client
+      shell: cmd
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake --build . --config Release
+        
+    - name: Upload worker binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-worker
+        path: worker_client/build/Release/jobs_worker.exe
+        retention-days: 30
+        
+  build-worker-gui:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.5.0'
+        modules: 'qt6-qtbase qt6-qttools'
+        arch: 'win64_msvc2019_64'
+        
+    - name: Install dependencies
+      run: |
+        choco install cmake -y
+        
+    - name: Build worker GUI
+      working-directory: worker_client_gui
+      shell: cmd
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake --build . --config Release
+        
+    - name: Upload worker GUI binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-worker-gui
+        path: worker_client_gui/build/Release/jobs_worker_gui.exe
+        retention-days: 30
+

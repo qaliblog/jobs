@@ -1,0 +1,104 @@
+name: Build Linux
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - 'worker_client/**'
+      - 'worker_client_gui/**'
+      - '.github/workflows/linux-build.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - 'worker_client/**'
+      - 'worker_client_gui/**'
+      - '.github/workflows/linux-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libssl-dev
+        
+    - name: Build backend
+      working-directory: backend
+      run: |
+        mkdir -p build && cd build
+        cmake ..
+        make -j$(nproc)
+        
+    - name: Upload backend binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-backend
+        path: backend/build/jobs_backend
+        retention-days: 30
+        
+  build-worker:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libssl-dev
+        
+    - name: Build worker client
+      working-directory: worker_client
+      run: |
+        mkdir -p build && cd build
+        cmake ..
+        make -j$(nproc)
+        
+    - name: Upload worker binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-worker
+        path: worker_client/build/jobs_worker
+        retention-days: 30
+        
+  build-worker-gui:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.5.0'
+        modules: 'qt6-qtbase qt6-qttools'
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libssl-dev
+        
+    - name: Build worker GUI
+      working-directory: worker_client_gui
+      run: |
+        mkdir -p build && cd build
+        cmake ..
+        make -j$(nproc)
+        
+    - name: Upload worker GUI binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-worker-gui
+        path: worker_client_gui/build/jobs_worker_gui
+        retention-days: 30
+

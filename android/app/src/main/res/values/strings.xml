@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jobs</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="server_address">Server Address</string>
+    <string name="port">Port</string>
+    <string name="status">Status</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="cpu_usage">CPU Usage</string>
+    <string name="memory_usage">Memory Usage</string>
+    <string name="gpu_usage">GPU Usage</string>
+    <string name="network_bandwidth">Network Bandwidth</string>
+    <string name="tasks_queued">Tasks Queued</string>
+    <string name="tasks_completed">Tasks Completed</string>
+    <string name="offload_decision">Offload Decision</string>
+</resources>
+

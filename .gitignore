@@ -1,0 +1,29 @@
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/*.iml
+android/app/build/
+android/build/
+android/.cxx/
+android/.externalNativeBuild/
+android/app/release/
+android/app/debug/
+
+# C++ Backend
+backend/build/
+backend/CMakeFiles/
+backend/CMakeCache.txt
+backend/cmake_install.cmake
+backend/Makefile
+backend/*.o
+backend/jobs_backend
+
+# General
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+

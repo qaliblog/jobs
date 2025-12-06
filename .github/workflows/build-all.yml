@@ -1,0 +1,42 @@
+name: Build All Platforms
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-all:
+    name: Build All
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - platform: android
+            job: android-build
+          - platform: linux-backend
+            job: linux-build
+          - platform: linux-worker
+            job: linux-build
+          - platform: linux-worker-gui
+            job: linux-build
+          - platform: windows-backend
+            job: windows-build
+          - platform: windows-worker
+            job: windows-build
+          - platform: windows-worker-gui
+            job: windows-build
+    
+    steps:
+    - name: Trigger ${{ matrix.platform }} build
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: '${{ matrix.job }}.yml',
+            ref: context.ref
+          })
+
