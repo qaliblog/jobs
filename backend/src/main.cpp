@@ -3,6 +3,11 @@
 #include <memory>
 #include "server.h"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 std::unique_ptr<Server> g_server;
 
 void signalHandler(int signal) {
@@ -14,6 +19,14 @@ void signalHandler(int signal) {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed" << std::endl;
+        return 1;
+    }
+#endif
+    
     int port = 8080;
     
     if (argc > 1) {
@@ -35,6 +48,10 @@ int main(int argc, char* argv[]) {
     while (g_server->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+    
+#ifdef _WIN32
+    WSACleanup();
+#endif
     
     return 0;
 }
