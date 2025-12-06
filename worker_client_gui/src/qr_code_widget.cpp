@@ -204,8 +204,11 @@ void QRCodeWidget::generateQRCode(const QString& data)
         }
     }
     
-    // Draw data pattern - encode the actual data with less randomness
+    // Draw data pattern - encode the actual data bit by bit
     int dataIndex = 0;
+    int bitIndex = 0;
+    uchar currentByte = 0;
+    
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
             // Skip finder patterns, timing patterns, and alignment pattern
@@ -218,19 +221,22 @@ void QRCodeWidget::generateQRCode(const QString& data)
                 continue;
             }
             
-            // Encode data using a more structured pattern
+            // Encode data bit by bit for better representation
             bool draw = false;
             if (dataIndex < dataBytes.size()) {
-                // Use data byte value to determine pattern - more structured
-                uchar byte = dataBytes[dataIndex];
-                // Create a pattern based on byte value and position
-                uint pattern = (byte + (x * 7) + (y * 11)) % 5;
-                // Less dense pattern for better scanning
-                draw = (pattern == 0 || pattern == 2);
-                dataIndex++;
+                if (bitIndex == 0) {
+                    currentByte = dataBytes[dataIndex];
+                }
+                // Extract bit from current byte (MSB first)
+                draw = (currentByte & (1 << (7 - bitIndex))) != 0;
+                bitIndex++;
+                if (bitIndex >= 8) {
+                    bitIndex = 0;
+                    dataIndex++;
+                }
             } else {
-                // Fill remaining with structured error correction pattern
-                uint pattern = (hash + (x * 13) + (y * 17)) % 4;
+                // Fill remaining with error correction pattern based on hash
+                uint pattern = (hash + (x * 13) + (y * 17)) % 3;
                 draw = (pattern == 0);
             }
             
