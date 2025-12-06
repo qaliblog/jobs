@@ -168,7 +168,7 @@ void RequestsWidget::acceptRequest(const QString& requestId)
     QByteArray data = doc.toJson();
     
     QString serverUrl = "http://localhost:8080/api/requests/accept";
-    QNetworkRequest request(QUrl(serverUrl));
+    QNetworkRequest request{QUrl(serverUrl)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     
     QNetworkReply *reply = manager->post(request, data);
@@ -195,7 +195,7 @@ void RequestsWidget::rejectRequest(const QString& requestId)
     QByteArray data = doc.toJson();
     
     QString serverUrl = "http://localhost:8080/api/requests/reject";
-    QNetworkRequest request(QUrl(serverUrl));
+    QNetworkRequest request{QUrl(serverUrl)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     
     QNetworkReply *reply = manager->post(request, data);

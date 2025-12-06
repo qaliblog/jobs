@@ -215,9 +215,14 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         modifier = Modifier.padding(top = 8.dp)
                     )
                     Text(
-                        text = "Address: ${viewModel.getLocalIpAddress()}:${uiState.port}",
+                        text = "Server Address: ${viewModel.getLocalIpAddress()}:${uiState.port}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "This device will be the server",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }

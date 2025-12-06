@@ -65,7 +65,7 @@ void QRCodeWidget::onShowQRCodeClicked()
     QString connectionInfo = getLocalConnectionInfo();
     generateQRCode(connectionInfo);
     qrCodeLabel->show();
-    infoLabel->setText(QString("Connection Info: %1\nScan this QR code to connect to this device")
+    infoLabel->setText(QString("Server Address: %1\nThis device will be the server\nScan this QR code to connect")
                        .arg(connectionInfo));
 }
 
@@ -89,7 +89,8 @@ void QRCodeWidget::onScanQRCodeClicked()
 
 QString QRCodeWidget::getLocalConnectionInfo()
 {
-    // Get local IP address
+    // Get local IP address (receiver's/server's IP address)
+    // This device showing the QR code will be the server
     QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
     for (const QHostAddress &address : addresses) {
         if (address.protocol() == QAbstractSocket::IPv4Protocol && 
