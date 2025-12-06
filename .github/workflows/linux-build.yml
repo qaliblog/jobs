@@ -81,8 +81,8 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.6.0'
-        modules: 'qtbase qttools'
         arch: 'gcc_64'
+        modules: 'qt.qt6.660.gcc_64 qt.qt6.660.addons.qt6tools.gcc_64'
         
     - name: Install dependencies
       run: |
