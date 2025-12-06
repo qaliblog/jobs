@@ -39,9 +39,23 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    // Camera permission
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    
+    // QR Code scanner launcher
+    val qrCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            viewModel.onQRCodeScanned(result.contents)
+        }
+    }
 
     Column(
         modifier = Modifier

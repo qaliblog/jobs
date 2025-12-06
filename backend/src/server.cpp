@@ -541,80 +541,102 @@ std::string Server::processRecruitRequest(const std::string& json, const std::st
     return response.str();
 }
 
-std::string Server::processGetPendingRequests() {
-    std::lock_guard<std::mutex> lock(requests_mutex_);
-    
-    std::ostringstream json;
-    json << "HTTP/1.1 200 OK\r\n"
-         << "Content-Type: application/json\r\n"
-         << "Access-Control-Allow-Origin: *\r\n"
-         << "\r\n"
-         << "{\"requests\":[";
-    
+std::string Server::processPendingRequests() {
+    std::ostringstream json_array;
+    json_array << "{\"requests\":[";
     bool first = true;
-    for (const auto& pair : pending_requests_) {
-        if (!first) json << ",";
-        first = false;
-        json << "{\"id\":\"" << pair.second.requesterId
-             << "\",\"name\":\"" << pair.second.requesterName
-             << "\",\"address\":\"" << pair.second.requesterAddress
-             << "\",\"port\":" << pair.second.requesterPort
-             << ",\"timestamp\":" << pair.second.timestamp << "}";
-    }
-    
-    json << "]}";
-    return json.str();
-}
-
-std::string Server::processAcceptRequest(const std::string& json) {
-    std::string requestId = extractJsonValue(json, "requestId");
-    
-    RecruitRequest req;
     {
         std::lock_guard<std::mutex> lock(requests_mutex_);
-        auto it = pending_requests_.find(requestId);
-        if (it == pending_requests_.end()) {
-            return "HTTP/1.1 404 Not Found\r\n\r\n{\"error\":\"Request not found\"}";
+        for (const auto& req : pending_requests_) {
+            if (!first) json_array << ",";
+            json_array << req.toJson();
+            first = false;
         }
-        req = it->second;
-        pending_requests_.erase(it);
     }
-    
-    // Register as worker for the requester
-    std::string capabilities = "cpuCores:" + std::to_string(resource_monitor_->getCurrentResources().cpuCores) +
-                             ",availableMemory:" + std::to_string(resource_monitor_->getCurrentResources().availableMemory) +
-                             ",hasGpu:false";
-    
-    // Note: In a full implementation, we would register with the requester's server
-    // For now, just return success
-    
+    json_array << "]}";
+
     std::ostringstream response;
     response << "HTTP/1.1 200 OK\r\n"
              << "Content-Type: application/json\r\n"
              << "Access-Control-Allow-Origin: *\r\n"
              << "\r\n"
-             << "{\"status\":\"accepted\",\"message\":\"Request accepted\"}";
+             << json_array.str();
+    return response.str();
+}
+
+std::string Server::processAcceptRequest(const std::string& json) {
+    std::string requestId = extractJsonValue(json, "requestId");
+    std::string status = "rejected";
+    std::string message = "Request not found or already processed";
+
+    {
+        std::lock_guard<std::mutex> lock(requests_mutex_);
+        auto it = std::find_if(pending_requests_.begin(), pending_requests_.end(),
+                               [&](const ConnectionRequest& req) { return req.id == requestId; });
+
+        if (it != pending_requests_.end()) {
+            // Found the request
+            ConnectionRequest accepted_req = *it;
+            pending_requests_.erase(it);
+
+            // Now, perform the actual recruitment/worker registration
+            if (accepted_req.requestType == "recruit") {
+                // This server is being recruited by accepted_req.deviceName
+                // Register this server as a worker for the requester
+                std::string capabilities = "cpuCores:" + std::to_string(resource_monitor_->getCurrentResources().cpuCores) +
+                                         ",availableMemory:" + std::to_string(resource_monitor_->getCurrentResources().availableMemory) +
+                                         ",hasGpu:false";
+                // Note: The server itself becomes a worker for the recruiter.
+                // The recruiter's address is accepted_req.deviceAddress.
+                // We need to register this server as a worker with the recruiter's server.
+                // This part would involve making an HTTP request from this server to the recruiter's server.
+                // For now, we'll just log it and return success.
+                std::cout << "Server accepted recruitment from " << accepted_req.deviceName << " (" << accepted_req.deviceAddress << ")\n";
+                status = "accepted";
+                message = "Recruitment accepted. This server is now working for " + accepted_req.deviceName;
+            } else if (accepted_req.requestType == "work") {
+                // accepted_req.deviceName wants to work for this server
+                // Register the worker with this server's worker manager
+                std::string registeredId = worker_manager_->registerWorker(accepted_req.deviceType, accepted_req.deviceAddress, 0, "dynamic_capabilities"); // Port 0 for now
+                std::cout << "Server accepted worker " << accepted_req.deviceName << " (" << accepted_req.deviceAddress << "). Registered ID: " << registeredId << "\n";
+                status = "accepted";
+                message = "Worker " + accepted_req.deviceName + " accepted.";
+            }
+        }
+    }
+
+    std::ostringstream response;
+    response << "HTTP/1.1 200 OK\r\n"
+             << "Content-Type: application/json\r\n"
+             << "Access-Control-Allow-Origin: *\r\n"
+             << "\r\n"
+             << "{\"status\":\"" << status << "\",\"message\":\"" << message << "\"}";
     return response.str();
 }
 
 std::string Server::processRejectRequest(const std::string& json) {
     std::string requestId = extractJsonValue(json, "requestId");
-    
+    std::string status = "rejected";
+    std::string message = "Request not found or already processed";
+
     {
         std::lock_guard<std::mutex> lock(requests_mutex_);
-        auto it = pending_requests_.find(requestId);
-        if (it == pending_requests_.end()) {
-            return "HTTP/1.1 404 Not Found\r\n\r\n{\"error\":\"Request not found\"}";
+        auto it = std::find_if(pending_requests_.begin(), pending_requests_.end(),
+                               [&](const ConnectionRequest& req) { return req.id == requestId; });
+
+        if (it != pending_requests_.end()) {
+            pending_requests_.erase(it);
+            status = "rejected";
+            message = "Request rejected.";
         }
-        pending_requests_.erase(it);
     }
-    
+
     std::ostringstream response;
     response << "HTTP/1.1 200 OK\r\n"
              << "Content-Type: application/json\r\n"
              << "Access-Control-Allow-Origin: *\r\n"
              << "\r\n"
-             << "{\"status\":\"rejected\",\"message\":\"Request rejected\"}";
+             << "{\"status\":\"" << status << "\",\"message\":\"" << message << "\"}";
     return response.str();
 }
 
