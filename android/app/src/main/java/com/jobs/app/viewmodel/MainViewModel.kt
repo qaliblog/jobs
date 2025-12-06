@@ -31,9 +31,8 @@ data class MainUiState(
     val tasksCompleted: Int = 0,
     val lastOffloadDecision: String = "No tasks yet",
     val activeWorkers: Int = 0,
-    val discoveredDevices: List<DiscoveredDevice> = emptyList(),
-    val isScanning: Boolean = false,
-    val pendingRequests: List<ConnectionRequest> = emptyList()
+    val pendingRequests: List<ConnectionRequest> = emptyList(),
+    val qrCodeVisible: Boolean = false
 )
 
 data class ConnectionRequest(
@@ -105,22 +104,6 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(isConnected = false)
     }
     
-    fun startNetworkScan() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isScanning = true)
-            val devices = networkScanner.scanNetwork(8080)
-            _uiState.value = _uiState.value.copy(
-                discoveredDevices = devices,
-                isScanning = false
-            )
-        }
-    }
-    
-    fun stopNetworkScan() {
-        networkScanner.stopScanning()
-        _uiState.value = _uiState.value.copy(isScanning = false)
-    }
-    
     fun refreshRequests() {
         viewModelScope.launch {
             if (_uiState.value.isServerMode) {
@@ -156,55 +139,6 @@ class MainViewModel : ViewModel() {
         }
     }
     
-    fun recruitDevice(device: DiscoveredDevice) {
-        viewModelScope.launch {
-            try {
-                val client = ApiClient(device.address, device.port)
-                val success = client.sendRecruitRequest(
-                    requesterId = "android-${android.os.Build.MODEL}",
-                    requesterName = "Android Device",
-                    requesterAddress = getLocalIpAddress(),
-                    requesterPort = _uiState.value.port.toInt()
-                )
-                if (success) {
-                    // Device accepted, now connected
-                    apiClient = client
-                    _uiState.value = _uiState.value.copy(
-                        isConnected = true,
-                        serverAddress = device.address,
-                        port = device.port.toString()
-                    )
-                }
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-    
-    fun requestToWork(device: DiscoveredDevice) {
-        viewModelScope.launch {
-            try {
-                val client = ApiClient(device.address, device.port)
-                val resources = resourceMonitor.getCurrentResources()
-                val success = client.sendWorkRequest(
-                    workerId = "android-${android.os.Build.MODEL}",
-                    workerType = "android",
-                    capabilities = "cpuCores:${resources.cpuCores},availableMemory:${resources.availableMemoryMB},hasGpu:false"
-                )
-                if (success) {
-                    apiClient = client
-                    _uiState.value = _uiState.value.copy(
-                        isConnected = true,
-                        serverAddress = device.address,
-                        port = device.port.toString()
-                    )
-                }
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-    
     fun startServerMode() {
         // Start embedded server (would need to implement)
         _uiState.value = _uiState.value.copy(isServerMode = true)
@@ -221,7 +155,7 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(isServerMode = false)
     }
     
-    private fun getLocalIpAddress(): String {
+    fun getLocalIpAddress(): String {
         // Get local IP address
         return try {
             val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
