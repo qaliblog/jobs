@@ -103,7 +103,7 @@ void NetworkScannerWidget::onRefreshClicked()
     scanNetwork();
 }
 
-void NetworkScannerWidget::onDeviceDoubleClicked(QListWidgetItem* item)
+void NetworkScannerWidget::onDeviceDoubleClicked(QListWidgetItem* /* item */)
 {
     DiscoveredDevice device = getSelectedDevice();
     if (!device.id.isEmpty()) {

@@ -47,6 +47,7 @@ private:
     void scanNetwork();
     void addDiscoveredDevice(const DiscoveredDevice& device);
     DiscoveredDevice getSelectedDevice();
+    void parseDiscoveryResponse(const QByteArray& response, const QString& address, int port);
     
     QPushButton *scanButton;
     QPushButton *stopButton;
