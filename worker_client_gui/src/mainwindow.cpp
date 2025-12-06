@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "requests_widget.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <QIcon>
@@ -62,6 +63,10 @@ void MainWindow::setupUI()
     // Task Status Tab
     taskStatusWidget = new TaskStatusWidget(this);
     tabWidget->addTab(taskStatusWidget, "Tasks");
+    
+    // Requests Tab
+    requestsWidget = new RequestsWidget(this);
+    tabWidget->addTab(requestsWidget, "Requests");
     
     mainLayout->addWidget(tabWidget);
     
