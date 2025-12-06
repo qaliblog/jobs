@@ -80,4 +80,5 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed setup instructions.
 - [MULTI_WORKER.md](MULTI_WORKER.md) - Multi-worker system guide
 - [PEER_TO_PEER.md](PEER_TO_PEER.md) - Peer-to-peer features guide
 - [GUI_GUIDE.md](GUI_GUIDE.md) - GUI features and usage guide
+- [CI_CD.md](CI_CD.md) - CI/CD workflows and build automation
 
