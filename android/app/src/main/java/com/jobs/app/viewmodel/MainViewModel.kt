@@ -6,6 +6,7 @@ import com.jobs.app.data.ResourceMonitor
 import com.jobs.app.data.TaskOffloader
 import com.jobs.app.data.NetworkScanner
 import com.jobs.app.data.DiscoveredDevice
+import com.jobs.app.data.Task
 import com.jobs.app.JobsApplication
 import com.jobs.app.network.ApiClient
 import kotlinx.coroutines.flow.MutableStateFlow

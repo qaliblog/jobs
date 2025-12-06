@@ -210,7 +210,7 @@ class ApiClient(private val serverAddress: String, private val port: Int) {
     }
 
     fun close() {
-        client.dispatcher().executorService().shutdown()
+        client.dispatcher.executorService.shutdown()
     }
 }
 
