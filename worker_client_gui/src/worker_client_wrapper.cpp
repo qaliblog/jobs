@@ -40,7 +40,7 @@ WorkerClientWrapper::~WorkerClientWrapper()
     stopWorker();
 }
 
-void WorkerClientWrapper::connectToServer(const QString& address, int port, const QString& workerType)
+void WorkerClientWrapper::connectToServer(const QString& /* address */, int /* port */, const QString& /* workerType */)
 {
     // Implementation would connect to server
     isConnected = true;

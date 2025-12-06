@@ -45,9 +45,9 @@ void NetworkScanner::stopScanning() {
     }
 }
 
-void NetworkScanner::startBroadcasting(const std::string& deviceName,
-                                      const std::string& deviceType,
-                                      int serverPort, bool canServer, bool canWorker) {
+void NetworkScanner::startBroadcasting(const std::string& /* deviceName */,
+                                      const std::string& /* deviceType */,
+                                      int /* serverPort */, bool /* canServer */, bool /* canWorker */) {
     if (broadcasting_) return;
     
     broadcasting_ = true;

@@ -18,7 +18,7 @@ public:
 
 public slots:
     void onTaskQueued(const QString& taskId);
-    void onTaskCompleted(const QString& taskId);
+    void onTaskCompleted(const QString& taskId, const QString& result);
     void onTaskFailed(const QString& taskId, const QString& error);
     void updateStatistics(int queued, int completed, int failed);
 
