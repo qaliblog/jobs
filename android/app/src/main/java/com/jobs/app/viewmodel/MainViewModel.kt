@@ -155,6 +155,48 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(isServerMode = false)
     }
     
+    fun showQRCode() {
+        _uiState.value = _uiState.value.copy(qrCodeVisible = !_uiState.value.qrCodeVisible)
+    }
+    
+    fun scanQRCode() {
+        // This would launch QR code scanner activity
+        // For now, we'll implement basic QR code scanning
+        viewModelScope.launch {
+            // TODO: Launch QR code scanner
+            // On scan result, connect to the server
+        }
+    }
+    
+    fun getQRCodeBitmap(): Bitmap? {
+        // QR code contains the receiver's (server's) IP address and port
+        // This is the device showing the QR code - it will be the server
+        val receiverIp = getLocalIpAddress()
+        val receiverPort = _uiState.value.port
+        val connectionInfo = "$receiverIp:$receiverPort"
+        
+        return try {
+            val writer = QRCodeWriter()
+            val hints = hashMapOf<EncodeHintType, Any>().apply {
+                put(EncodeHintType.CHARACTER_SET, "UTF-8")
+                put(EncodeHintType.MARGIN, 1)
+            }
+            val bitMatrix = writer.encode(connectionInfo, BarcodeFormat.QR_CODE, 512, 512, hints)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+                }
+            }
+            bitmap
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
     fun getLocalIpAddress(): String {
         // Get local IP address
         return try {

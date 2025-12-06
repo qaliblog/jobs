@@ -34,7 +34,6 @@ private slots:
     void onRefreshClicked();
     void onAcceptClicked();
     void onRejectClicked();
-    void updateRequestsList();
 
 private:
     void setupUI();

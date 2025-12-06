@@ -2,14 +2,15 @@
 #include <fstream>
 #include <sstream>
 #include <thread>
-#include <sys/sysinfo.h>
-#include <unistd.h>
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <windows.h>
 #include <psapi.h>
 #else
+#include <sys/sysinfo.h>
 #include <sys/resource.h>
+#include <unistd.h>
 #endif
 
 ResourceMonitor::ResourceMonitor() {
