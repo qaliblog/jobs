@@ -81,7 +81,10 @@ double ResourceMonitor::getCpuUsage() {
         last_kernel = kernel;
         last_user = user;
         
-        return std::max(0.0, std::min(100.0, cpu_percent));
+        double result = cpu_percent;
+        if (result < 0.0) result = 0.0;
+        if (result > 100.0) result = 100.0;
+        return result;
     }
     return 0.0;
 #else

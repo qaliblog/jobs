@@ -110,7 +110,11 @@ void Server::serverLoop() {
     }
     
     int opt = 1;
+#ifdef _WIN32
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+#else
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+#endif
     
     sockaddr_in address{};
     address.sin_family = AF_INET;
@@ -163,7 +167,11 @@ void Server::serverLoop() {
 
 void Server::handleClient(int client_fd, sockaddr_in client_address) {
     char buffer[8192] = {0};
-    ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
+#ifdef _WIN32
+    int bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+#else
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+#endif
     
     if (bytes_read > 0) {
         std::string request(buffer, bytes_read);
