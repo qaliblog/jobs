@@ -6,9 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -45,40 +43,42 @@ class NetworkScanner(private val context: Context) {
             )
             
             // Parallel scanning using coroutines (batch of 50 at a time)
-            val batchSize = 50
-            (1..254).chunked(batchSize).forEach { batch ->
-                if (!isScanning) return@forEach
-                
-                val jobs = batch.map { i ->
-                    async {
-                        if (!isScanning) return@async
-                        
-                        val ip = "$networkPrefix$i"
-                        try {
-                            // Fast connection attempt
-                            val socket = Socket()
-                            socket.soTimeout = 100 // 100ms timeout
-                            socket.connect(java.net.InetSocketAddress(ip, port), 100)
+            coroutineScope {
+                val batchSize = 50
+                (1..254).chunked(batchSize).forEach { batch ->
+                    if (!isScanning) return@forEach
+                    
+                    val jobs = batch.map { i ->
+                        async {
+                            if (!isScanning) return@async
                             
-                            // Send discovery request
-                            val request = "GET /api/discover HTTP/1.1\r\nHost: $ip:$port\r\n\r\n"
-                            socket.getOutputStream().write(request.toByteArray())
-                            
-                            // Read response with timeout
-                            val response = socket.getInputStream().bufferedReader().readText()
-                            parseDiscoveryResponse(response, ip, port)
-                            
-                            socket.close()
-                        } catch (e: SocketTimeoutException) {
-                            // Timeout, skip
-                        } catch (e: Exception) {
-                            // Connection failed, skip
+                            val ip = "$networkPrefix$i"
+                            try {
+                                // Fast connection attempt
+                                val socket = Socket()
+                                socket.soTimeout = 100 // 100ms timeout
+                                socket.connect(java.net.InetSocketAddress(ip, port), 100)
+                                
+                                // Send discovery request
+                                val request = "GET /api/discover HTTP/1.1\r\nHost: $ip:$port\r\n\r\n"
+                                socket.getOutputStream().write(request.toByteArray())
+                                
+                                // Read response with timeout
+                                val response = socket.getInputStream().bufferedReader().readText()
+                                parseDiscoveryResponse(response, ip, port)
+                                
+                                socket.close()
+                            } catch (e: SocketTimeoutException) {
+                                // Timeout, skip
+                            } catch (e: Exception) {
+                                // Connection failed, skip
+                            }
                         }
                     }
+                    
+                    // Wait for batch to complete
+                    jobs.awaitAll()
                 }
-                
-                // Wait for batch to complete
-                jobs.awaitAll()
             }
         } catch (e: Exception) {
             // Handle error
