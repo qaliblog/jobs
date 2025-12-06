@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.CoroutineScope
 import java.net.InetAddress
 import java.net.Socket
@@ -42,24 +44,27 @@ class NetworkScanner(private val context: Context) {
                 (ipAddress shr 16 and 0xff)
             )
             
-            // Scan IP range
-            for (i in 1..254) {
-                if (!isScanning) break
+            // Parallel scanning using coroutines (batch of 50 at a time)
+            val batchSize = 50
+            (1..254).chunked(batchSize).forEach { batch ->
+                if (!isScanning) return@forEach
                 
-                val ip = "$networkPrefix$i"
-                try {
-                    val address = InetAddress.getByName(ip)
-                    if (address.isReachable(200)) {
-                        // Try to connect and discover
+                val jobs = batch.map { i ->
+                    kotlinx.coroutines.async {
+                        if (!isScanning) return@async
+                        
+                        val ip = "$networkPrefix$i"
                         try {
+                            // Fast connection attempt
                             val socket = Socket()
-                            socket.connect(java.net.InetSocketAddress(ip, port), 200)
+                            socket.soTimeout = 100 // 100ms timeout
+                            socket.connect(java.net.InetSocketAddress(ip, port), 100)
                             
                             // Send discovery request
                             val request = "GET /api/discover HTTP/1.1\r\nHost: $ip:$port\r\n\r\n"
                             socket.getOutputStream().write(request.toByteArray())
                             
-                            // Read response
+                            // Read response with timeout
                             val response = socket.getInputStream().bufferedReader().readText()
                             parseDiscoveryResponse(response, ip, port)
                             
@@ -70,9 +75,10 @@ class NetworkScanner(private val context: Context) {
                             // Connection failed, skip
                         }
                     }
-                } catch (e: Exception) {
-                    // Skip this IP
                 }
+                
+                // Wait for batch to complete
+                jobs.awaitAll()
             }
         } catch (e: Exception) {
             // Handle error
