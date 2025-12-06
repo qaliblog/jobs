@@ -24,18 +24,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../shared/include)
 set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
-    src/network_scanner_widget.cpp
+    src/qr_code_widget.cpp
     src/connection_widget.cpp
     src/resource_monitor_widget.cpp
     src/task_status_widget.cpp
     src/worker_client_wrapper.cpp
     src/requests_widget.cpp
-    ../shared/src/network_scanner.cpp
 )
 
 set(HEADERS
     include/mainwindow.h
-    include/network_scanner_widget.h
+    include/qr_code_widget.h
     include/connection_widget.h
     include/resource_monitor_widget.h
     include/task_status_widget.h

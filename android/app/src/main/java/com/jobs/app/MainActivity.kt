@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jobs.app.ui.theme.JobsTheme
 import com.jobs.app.viewmodel.MainViewModel
-import com.jobs.app.data.DiscoveredDevice
 import com.jobs.app.viewmodel.ConnectionRequest
 import androidx.compose.material3.Switch
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +19,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,7 +163,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             }
         }
 
-        // Network Discovery Section - Made more prominent
+        // QR Code Connection Section
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
@@ -165,61 +173,50 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "🔍 Network Scanner",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    if (uiState.isScanning) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "📱 QR Code Connection",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = { viewModel.startNetworkScan() },
-                        modifier = Modifier.weight(1f),
-                        enabled = !uiState.isScanning
+                        onClick = { viewModel.showQRCode() },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text(if (uiState.isScanning) "Scanning..." else "Scan Network")
+                        Text("Show My QR Code")
                     }
                     Button(
-                        onClick = { viewModel.stopNetworkScan() },
-                        enabled = uiState.isScanning
+                        onClick = { viewModel.scanQRCode() },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text("Stop")
+                        Text("Scan QR Code")
                     }
                 }
                 
-                if (uiState.discoveredDevices.isNotEmpty()) {
-                    Text(
-                        text = "Found ${uiState.discoveredDevices.size} device(s)",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.height(200.dp)
-                    ) {
-                        items(uiState.discoveredDevices.size) { index ->
-                            DeviceCard(uiState.discoveredDevices[index], viewModel)
-                        }
+                if (uiState.qrCodeVisible) {
+                    // Show QR code
+                    viewModel.getQRCodeBitmap()?.let { bitmap ->
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.size(250.dp)
+                        )
                     }
-                } else if (!uiState.isScanning) {
                     Text(
-                        text = "No devices found. Tap 'Scan Network' to discover devices.",
+                        text = "Scan this QR code to connect to this device",
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        text = "Address: ${viewModel.getLocalIpAddress()}:${uiState.port}",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -339,38 +336,6 @@ fun ResourceBar(label: String, value: Float) {
     }
 }
 
-@Composable
-fun DeviceCard(device: DiscoveredDevice, viewModel: MainViewModel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = device.name,
-                style = MaterialTheme.typography.titleSmall
-            )
-            Text(
-                text = "${device.type} @ ${device.address}:${device.port}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Button(
-                onClick = { viewModel.recruitDevice(device) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Recruit")
-            }
-        }
-    }
-}
 
 @Composable
 fun RequestCard(request: ConnectionRequest, viewModel: MainViewModel) {

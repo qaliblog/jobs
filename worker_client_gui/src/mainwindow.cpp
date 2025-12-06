@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "qr_code_widget.h"
 #include "requests_widget.h"
 #include <QMessageBox>
 #include <QApplication>
@@ -48,9 +49,9 @@ void MainWindow::setupUI()
     // Create tab widget
     tabWidget = new QTabWidget(this);
     
-    // Network Scanner Tab
-    networkScannerWidget = new NetworkScannerWidget(this);
-    tabWidget->addTab(networkScannerWidget, "Network Discovery");
+    // QR Code Connection Tab
+    qrCodeWidget = new QRCodeWidget(this);
+    tabWidget->addTab(qrCodeWidget, "QR Code");
     
     // Connection Tab
     connectionWidget = new ConnectionWidget(this);

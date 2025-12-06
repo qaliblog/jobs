@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jobs.app.data.ResourceMonitor
 import com.jobs.app.data.TaskOffloader
-import com.jobs.app.data.NetworkScanner
-import com.jobs.app.data.DiscoveredDevice
 import com.jobs.app.data.Task
+import android.graphics.Bitmap
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import android.graphics.Color
 import com.jobs.app.JobsApplication
 import com.jobs.app.network.ApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +51,6 @@ class MainViewModel : ViewModel() {
 
     private val resourceMonitor = ResourceMonitor()
     private val taskOffloader = TaskOffloader()
-    private val networkScanner = NetworkScanner(JobsApplication.instance)
     private var apiClient: ApiClient? = null
 
     init {

@@ -8,7 +8,7 @@
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QAction>
-#include "network_scanner_widget.h"
+#include "qr_code_widget.h"
 #include "connection_widget.h"
 #include "resource_monitor_widget.h"
 #include "task_status_widget.h"
@@ -37,7 +37,7 @@ private:
     void setupStatusBar();
     
     QTabWidget *tabWidget;
-    NetworkScannerWidget *networkScannerWidget;
+    QRCodeWidget *qrCodeWidget;
     ConnectionWidget *connectionWidget;
     ResourceMonitorWidget *resourceMonitorWidget;
     TaskStatusWidget *taskStatusWidget;
