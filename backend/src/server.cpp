@@ -2,16 +2,24 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <cstring>
 #include <algorithm>
 #include <regex>
 #include <thread>
 #include <chrono>
 #include <iterator>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <io.h>
+#define close closesocket
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#endif
 
 // Simple JSON parsing (in production, use a proper JSON library)
 std::string extractJsonValue(const std::string& json, const std::string& key) {

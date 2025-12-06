@@ -33,6 +33,11 @@ target_link_libraries(jobs_backend
     OpenSSL::Crypto
 )
 
+# Windows-specific libraries
+if(WIN32)
+    target_link_libraries(jobs_backend PRIVATE ws2_32 psapi)
+endif()
+
 # Compiler-specific options
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(jobs_backend PRIVATE -Wall -Wextra -O3)
