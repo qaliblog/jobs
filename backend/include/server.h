@@ -17,6 +17,8 @@
 #include "task_processor.h"
 #include "resource_monitor.h"
 #include "worker_manager.h"
+#include <map>
+#include <mutex>
 
 class Server {
 public:
@@ -38,6 +40,17 @@ private:
     std::unique_ptr<WorkerManager> worker_manager_;
     std::vector<std::unique_ptr<std::thread>> client_threads_;
     
+    // Pending recruit requests
+    struct RecruitRequest {
+        std::string requesterId;
+        std::string requesterName;
+        std::string requesterAddress;
+        int requesterPort;
+        long timestamp;
+    };
+    std::map<std::string, RecruitRequest> pending_requests_;
+    std::mutex requests_mutex_;
+    
     void serverLoop();
     void handleClient(int client_fd, sockaddr_in client_address);
     void handleRequest(int client_fd, const std::string& request, std::string& response);
@@ -54,6 +67,9 @@ private:
     std::string processDiscovery();
     std::string processRecruitRequest(const std::string& json, const std::string& clientAddress);
     std::string processWorkRequest(const std::string& json, const std::string& clientAddress);
+    std::string processGetPendingRequests();
+    std::string processAcceptRequest(const std::string& json);
+    std::string processRejectRequest(const std::string& json);
 };
 
 #endif // SERVER_H

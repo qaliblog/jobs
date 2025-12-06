@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <iterator>
+#include <ctime>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -276,6 +277,24 @@ void Server::handleRequest(int client_fd, const std::string& request, std::strin
         } else {
             response = "HTTP/1.1 400 Bad Request\r\n\r\n";
         }
+    } else if (request.find("GET /api/requests") != std::string::npos) {
+        response = processGetPendingRequests();
+    } else if (request.find("POST /api/requests/accept") != std::string::npos) {
+        size_t body_start = request.find("\r\n\r\n");
+        if (body_start != std::string::npos) {
+            std::string json = request.substr(body_start + 4);
+            response = processAcceptRequest(json);
+        } else {
+            response = "HTTP/1.1 400 Bad Request\r\n\r\n";
+        }
+    } else if (request.find("POST /api/requests/reject") != std::string::npos) {
+        size_t body_start = request.find("\r\n\r\n");
+        if (body_start != std::string::npos) {
+            std::string json = request.substr(body_start + 4);
+            response = processRejectRequest(json);
+        } else {
+            response = "HTTP/1.1 400 Bad Request\r\n\r\n";
+        }
     } else {
         response = "HTTP/1.1 404 Not Found\r\n\r\n";
     }
@@ -499,23 +518,103 @@ std::string Server::processRecruitRequest(const std::string& json, const std::st
     std::string requesterId = extractJsonValue(json, "requesterId");
     std::string requesterName = extractJsonValue(json, "requesterName");
     std::string requesterAddress = extractJsonValue(json, "requesterAddress");
-    // int requesterPort = extractJsonInt(json, "requesterPort"); // Unused for now
+    int requesterPort = extractJsonInt(json, "requesterPort");
     
-    // In a real implementation, this would show a prompt to the user
-    // For now, auto-accept and register as worker
-    std::string capabilities = "cpuCores:" + std::to_string(resource_monitor_->getCurrentResources().cpuCores) +
-                             ",availableMemory:" + std::to_string(resource_monitor_->getCurrentResources().availableMemory) +
-                             ",hasGpu:false";
-    
-    // Register this server as a worker for the requester
-    // The requester's address is in the request
+    // Store the request for user to accept/reject
+    {
+        std::lock_guard<std::mutex> lock(requests_mutex_);
+        RecruitRequest req;
+        req.requesterId = requesterId;
+        req.requesterName = requesterName;
+        req.requesterAddress = requesterAddress;
+        req.requesterPort = requesterPort;
+        req.timestamp = std::time(nullptr);
+        pending_requests_[requesterId] = req;
+    }
     
     std::ostringstream response;
     response << "HTTP/1.1 200 OK\r\n"
              << "Content-Type: application/json\r\n"
              << "Access-Control-Allow-Origin: *\r\n"
              << "\r\n"
-             << "{\"status\":\"accepted\",\"message\":\"Ready to work\"}";
+             << "{\"status\":\"pending\",\"message\":\"Request received, waiting for approval\"}";
+    return response.str();
+}
+
+std::string Server::processGetPendingRequests() {
+    std::lock_guard<std::mutex> lock(requests_mutex_);
+    
+    std::ostringstream json;
+    json << "HTTP/1.1 200 OK\r\n"
+         << "Content-Type: application/json\r\n"
+         << "Access-Control-Allow-Origin: *\r\n"
+         << "\r\n"
+         << "{\"requests\":[";
+    
+    bool first = true;
+    for (const auto& pair : pending_requests_) {
+        if (!first) json << ",";
+        first = false;
+        json << "{\"id\":\"" << pair.second.requesterId
+             << "\",\"name\":\"" << pair.second.requesterName
+             << "\",\"address\":\"" << pair.second.requesterAddress
+             << "\",\"port\":" << pair.second.requesterPort
+             << ",\"timestamp\":" << pair.second.timestamp << "}";
+    }
+    
+    json << "]}";
+    return json.str();
+}
+
+std::string Server::processAcceptRequest(const std::string& json) {
+    std::string requestId = extractJsonValue(json, "requestId");
+    
+    RecruitRequest req;
+    {
+        std::lock_guard<std::mutex> lock(requests_mutex_);
+        auto it = pending_requests_.find(requestId);
+        if (it == pending_requests_.end()) {
+            return "HTTP/1.1 404 Not Found\r\n\r\n{\"error\":\"Request not found\"}";
+        }
+        req = it->second;
+        pending_requests_.erase(it);
+    }
+    
+    // Register as worker for the requester
+    std::string capabilities = "cpuCores:" + std::to_string(resource_monitor_->getCurrentResources().cpuCores) +
+                             ",availableMemory:" + std::to_string(resource_monitor_->getCurrentResources().availableMemory) +
+                             ",hasGpu:false";
+    
+    // Note: In a full implementation, we would register with the requester's server
+    // For now, just return success
+    
+    std::ostringstream response;
+    response << "HTTP/1.1 200 OK\r\n"
+             << "Content-Type: application/json\r\n"
+             << "Access-Control-Allow-Origin: *\r\n"
+             << "\r\n"
+             << "{\"status\":\"accepted\",\"message\":\"Request accepted\"}";
+    return response.str();
+}
+
+std::string Server::processRejectRequest(const std::string& json) {
+    std::string requestId = extractJsonValue(json, "requestId");
+    
+    {
+        std::lock_guard<std::mutex> lock(requests_mutex_);
+        auto it = pending_requests_.find(requestId);
+        if (it == pending_requests_.end()) {
+            return "HTTP/1.1 404 Not Found\r\n\r\n{\"error\":\"Request not found\"}";
+        }
+        pending_requests_.erase(it);
+    }
+    
+    std::ostringstream response;
+    response << "HTTP/1.1 200 OK\r\n"
+             << "Content-Type: application/json\r\n"
+             << "Access-Control-Allow-Origin: *\r\n"
+             << "\r\n"
+             << "{\"status\":\"rejected\",\"message\":\"Request rejected\"}";
     return response.str();
 }
 

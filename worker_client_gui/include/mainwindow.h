@@ -12,6 +12,7 @@
 #include "connection_widget.h"
 #include "resource_monitor_widget.h"
 #include "task_status_widget.h"
+#include "requests_widget.h"
 
 QT_BEGIN_NAMESPACE
 class QTabWidget;
@@ -40,6 +41,7 @@ private:
     ConnectionWidget *connectionWidget;
     ResourceMonitorWidget *resourceMonitorWidget;
     TaskStatusWidget *taskStatusWidget;
+    RequestsWidget *requestsWidget;
     
     QAction *serverModeAction;
     bool isServerMode;

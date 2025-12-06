@@ -13,7 +13,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jobs.app.ui.theme.JobsTheme
 import com.jobs.app.viewmodel.MainViewModel
 import com.jobs.app.data.DiscoveredDevice
+import com.jobs.app.viewmodel.ConnectionRequest
 import androidx.compose.material3.Switch
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -149,19 +155,34 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             }
         }
 
-        // Network Discovery Section
+        // Network Discovery Section - Made more prominent
         Card(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Network Discovery",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🔍 Network Scanner",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    if (uiState.isScanning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -183,12 +204,73 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                 
                 if (uiState.discoveredDevices.isNotEmpty()) {
                     Text(
-                        text = "Discovered Devices: ${uiState.discoveredDevices.size}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "Found ${uiState.discoveredDevices.size} device(s)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    uiState.discoveredDevices.forEach { device ->
-                        DeviceCard(device, viewModel)
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.height(200.dp)
+                    ) {
+                        items(uiState.discoveredDevices.size) { index ->
+                            DeviceCard(uiState.discoveredDevices[index], viewModel)
+                        }
                     }
+                } else if (!uiState.isScanning) {
+                    Text(
+                        text = "No devices found. Tap 'Scan Network' to discover devices.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        
+        // Recruit Requests Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📥 Recruit Requests",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Button(
+                        onClick = { viewModel.refreshRequests() },
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text("Refresh")
+                    }
+                }
+                
+                if (uiState.pendingRequests.isNotEmpty()) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.height(200.dp)
+                    ) {
+                        items(uiState.pendingRequests.size) { index ->
+                            RequestCard(uiState.pendingRequests[index], viewModel)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "No pending requests",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -285,6 +367,63 @@ fun DeviceCard(device: DiscoveredDevice, viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Recruit")
+            }
+        }
+    }
+}
+
+@Composable
+fun RequestCard(request: ConnectionRequest, viewModel: MainViewModel) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = request.deviceName,
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                text = "${request.deviceType} @ ${request.deviceAddress}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = "Wants to recruit you",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.acceptRequest(request) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = "Accept")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Accept")
+                }
+                Button(
+                    onClick = { viewModel.rejectRequest(request) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Reject")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Reject")
+                }
             }
         }
     }

@@ -209,6 +209,91 @@ class ApiClient(private val serverAddress: String, private val port: Int) {
         return workers
     }
 
+    suspend fun getPendingRequests(): List<ConnectionRequest>? = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/requests")
+                .get()
+                .build()
+            
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                response.body?.string()?.let { parsePendingRequests(it) }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    suspend fun acceptRequest(requestId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("requestId", requestId)
+            }
+            
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val requestBody = json.toString().toRequestBody(mediaType)
+            
+            val request = Request.Builder()
+                .url("$baseUrl/api/requests/accept")
+                .post(requestBody)
+                .build()
+            
+            val response = client.newCall(request).execute()
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    suspend fun rejectRequest(requestId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("requestId", requestId)
+            }
+            
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val requestBody = json.toString().toRequestBody(mediaType)
+            
+            val request = Request.Builder()
+                .url("$baseUrl/api/requests/reject")
+                .post(requestBody)
+                .build()
+            
+            val response = client.newCall(request).execute()
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    private fun parsePendingRequests(json: String): List<ConnectionRequest> {
+        val requests = mutableListOf<ConnectionRequest>()
+        try {
+            val obj = JSONObject(json)
+            val requestsArray = obj.getJSONArray("requests")
+            
+            for (i in 0 until requestsArray.length()) {
+                val reqObj = requestsArray.getJSONObject(i)
+                requests.add(
+                    ConnectionRequest(
+                        id = reqObj.getString("id"),
+                        deviceName = reqObj.getString("name"),
+                        deviceAddress = reqObj.getString("address"),
+                        deviceType = "unknown",
+                        requestType = "recruit",
+                        timestamp = reqObj.getLong("timestamp")
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            // Parse error
+        }
+        return requests
+    }
+    
     fun close() {
         client.dispatcher.executorService.shutdown()
     }

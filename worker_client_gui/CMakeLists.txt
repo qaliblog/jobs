@@ -29,6 +29,7 @@ set(SOURCES
     src/resource_monitor_widget.cpp
     src/task_status_widget.cpp
     src/worker_client_wrapper.cpp
+    src/requests_widget.cpp
     ../shared/src/network_scanner.cpp
 )
 
@@ -39,6 +40,7 @@ set(HEADERS
     include/resource_monitor_widget.h
     include/task_status_widget.h
     include/worker_client_wrapper.h
+    include/requests_widget.h
 )
 
 set(RESOURCE_FILES

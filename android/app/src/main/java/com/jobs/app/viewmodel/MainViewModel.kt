@@ -119,6 +119,41 @@ class MainViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(isScanning = false)
     }
     
+    fun refreshRequests() {
+        viewModelScope.launch {
+            if (_uiState.value.isServerMode) {
+                // Fetch pending requests from server
+                apiClient?.getPendingRequests()?.let { requests ->
+                    _uiState.value = _uiState.value.copy(pendingRequests = requests)
+                }
+            }
+        }
+    }
+    
+    fun acceptRequest(request: ConnectionRequest) {
+        viewModelScope.launch {
+            apiClient?.acceptRequest(request.id)?.let { success ->
+                if (success) {
+                    // Remove from list
+                    val updated = _uiState.value.pendingRequests.filter { it.id != request.id }
+                    _uiState.value = _uiState.value.copy(pendingRequests = updated)
+                }
+            }
+        }
+    }
+    
+    fun rejectRequest(request: ConnectionRequest) {
+        viewModelScope.launch {
+            apiClient?.rejectRequest(request.id)?.let { success ->
+                if (success) {
+                    // Remove from list
+                    val updated = _uiState.value.pendingRequests.filter { it.id != request.id }
+                    _uiState.value = _uiState.value.copy(pendingRequests = updated)
+                }
+            }
+        }
+    }
+    
     fun recruitDevice(device: DiscoveredDevice) {
         viewModelScope.launch {
             try {
