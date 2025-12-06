@@ -81,7 +81,7 @@ private:
     std::string processDiscovery();
     std::string processRecruitRequest(const std::string& json, const std::string& clientAddress);
     std::string processWorkRequest(const std::string& json, const std::string& clientAddress);
-    std::string processGetPendingRequests();
+    std::string processPendingRequests();
     std::string processAcceptRequest(const std::string& json);
     std::string processRejectRequest(const std::string& json);
 };
