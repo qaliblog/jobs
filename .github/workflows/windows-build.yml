@@ -88,12 +88,12 @@ jobs:
       continue-on-error: true
       
     - name: Install Qt
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: '6.6.0'
-        arch: 'win64_msvc2019_64'
-        modules: 'qtbase qttools'
+      run: |
+        python -m pip install aqtinstall
+        python -m aqt install-qt windows desktop 6.6.0 win64_msvc2019_64 --autodesktop --outputdir D:\Qt --modules qt.qt6.660.win64_msvc2019_64 qt.qt6.660.addons.qt6tools.win64_msvc2019_64
       continue-on-error: true
+      env:
+        QT_DIR: D:\Qt\6.6.0\msvc2019_64
       
     - name: Install dependencies
       run: |
@@ -105,9 +105,11 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=D:\Qt\6.6.0\msvc2019_64
         cmake --build . --config Release
       continue-on-error: true
+      env:
+        Qt6_DIR: D:\Qt\6.6.0\msvc2019_64\lib\cmake\Qt6
         
     - name: Upload worker GUI binary
       if: success()

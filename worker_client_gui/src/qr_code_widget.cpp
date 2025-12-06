@@ -71,18 +71,23 @@ void QRCodeWidget::onShowQRCodeClicked()
 
 void QRCodeWidget::onScanQRCodeClicked()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-        "Select QR Code Image", "", "Image Files (*.png *.jpg *.jpeg)");
-    
-    if (!fileName.isEmpty()) {
-        // Load and decode QR code
-        QImage image(fileName);
-        if (!image.isNull()) {
-            // For now, just show a message
-            // In production, use a QR code decoding library
-            QMessageBox::information(this, "QR Code Scanned",
-                "QR code image loaded. Decoding functionality requires a QR code library.\n"
-                "For now, please manually enter the connection info.");
+    // Show a dialog to manually enter connection info
+    // Since we don't have a QR code decoding library, we'll use manual entry
+    bool ok;
+    QString text = QInputDialog::getText(this, "Enter Connection Info",
+                                         "IP:Port (e.g., 192.168.1.100:8080):", QLineEdit::Normal,
+                                         "", &ok);
+    if (ok && !text.isEmpty()) {
+        // Parse and use the connection info
+        QStringList parts = text.split(":");
+        if (parts.size() == 2) {
+            QString ip = parts[0];
+            QString port = parts[1];
+            QMessageBox::information(this, "Connection Info",
+                QString("IP: %1\nPort: %2\n\nPlease use this info to connect.").arg(ip).arg(port));
+        } else {
+            QMessageBox::warning(this, "Invalid Format",
+                "Please enter in format: IP:Port (e.g., 192.168.1.100:8080)");
         }
     }
 }
