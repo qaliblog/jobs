@@ -6,6 +6,8 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <mutex>
+#include <memory>
 
 struct DiscoveredDevice {
     std::string id;

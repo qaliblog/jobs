@@ -1,6 +1,8 @@
 #ifndef RESOURCE_MONITOR_H
 #define RESOURCE_MONITOR_H
 
+#include <string>
+
 struct WorkerResources {
     double cpuUsage;
     long long availableMemory;

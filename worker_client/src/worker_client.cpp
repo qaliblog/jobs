@@ -195,7 +195,7 @@ bool WorkerClient::sendHttpRequest(const std::string& method, const std::string&
     inet_pton(AF_INET, server_address_.c_str(), &server_addr.sin_addr);
     #endif
     
-    if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+    if (::connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         #ifdef _WIN32
         closesocket(sock);
         #else

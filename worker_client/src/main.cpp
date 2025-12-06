@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
             std::string selection;
             std::getline(std::cin, selection);
             int idx = std::stoi(selection) - 1;
-            if (idx >= 0 && idx < devices.size()) {
+            if (idx >= 0 && static_cast<size_t>(idx) < devices.size()) {
                 serverAddress = devices[idx].address;
                 serverPort = devices[idx].port;
             }

@@ -6,6 +6,8 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include "task_queue.h"
 #include "task_processor.h"
 #include "resource_monitor.h"

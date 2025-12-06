@@ -50,7 +50,7 @@ std::string TaskExecutor::executeTask(const std::string& taskJson) {
     return "unknown_task_type";
 }
 
-std::string TaskExecutor::executeComputationTask(float complexity, int dataSize) {
+std::string TaskExecutor::executeComputationTask(float complexity, int /* dataSize */) {
     // Simulate intensive computation
     int iterations = static_cast<int>(complexity * 1000000);
     
@@ -84,7 +84,7 @@ std::string TaskExecutor::executeComputationTask(float complexity, int dataSize)
     return oss.str();
 }
 
-std::string TaskExecutor::executeGpuTask(float complexity, const std::string& data) {
+std::string TaskExecutor::executeGpuTask(float complexity, const std::string& /* data */) {
     // GPU task execution (simulated)
     // In production, this would use CUDA/OpenCL
     int iterations = static_cast<int>(complexity * 500000);

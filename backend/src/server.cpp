@@ -470,12 +470,12 @@ std::string Server::processDiscovery() {
     return json.str();
 }
 
-std::string Server::processRecruitRequest(const std::string& json, const std::string& clientAddress) {
+std::string Server::processRecruitRequest(const std::string& json, const std::string& /* clientAddress */) {
     // Someone wants to recruit this server as a worker
     std::string requesterId = extractJsonValue(json, "requesterId");
     std::string requesterName = extractJsonValue(json, "requesterName");
     std::string requesterAddress = extractJsonValue(json, "requesterAddress");
-    int requesterPort = extractJsonInt(json, "requesterPort");
+    // int requesterPort = extractJsonInt(json, "requesterPort"); // Unused for now
     
     // In a real implementation, this would show a prompt to the user
     // For now, auto-accept and register as worker
