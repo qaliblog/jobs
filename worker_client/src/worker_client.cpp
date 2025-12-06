@@ -18,14 +18,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #endif
-#include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#endif
 
 WorkerClient::WorkerClient(const std::string& serverAddress, int serverPort,
                           const std::string& workerType)

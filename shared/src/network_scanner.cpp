@@ -16,9 +16,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#endif
-#pragma comment(lib, "ws2_32.lib")
-#else
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif
