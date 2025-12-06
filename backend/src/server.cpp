@@ -624,15 +624,25 @@ std::string Server::processWorkRequest(const std::string& json, const std::strin
     std::string workerType = extractJsonValue(json, "workerType");
     std::string capabilities = extractJsonValue(json, "capabilities");
     
-    // Auto-accept and register the worker
-    std::string registeredId = worker_manager_->registerWorker(workerType, clientAddress, 0, capabilities);
+    // Store the request for user to accept/reject (like recruit requests)
+    {
+        std::lock_guard<std::mutex> lock(requests_mutex_);
+        ConnectionRequest req;
+        req.id = workerId;
+        req.deviceName = workerId; // Use workerId as name
+        req.deviceAddress = clientAddress;
+        req.deviceType = workerType;
+        req.requestType = "work";
+        req.timestamp = std::chrono::system_clock::now();
+        pending_requests_.push_back(req);
+    }
     
     std::ostringstream response;
     response << "HTTP/1.1 200 OK\r\n"
              << "Content-Type: application/json\r\n"
              << "Access-Control-Allow-Origin: *\r\n"
              << "\r\n"
-             << "{\"status\":\"accepted\",\"workerId\":\"" << registeredId << "\"}";
+             << "{\"status\":\"pending\",\"message\":\"Work request received, awaiting user action\"}";
     return response.str();
 }
 

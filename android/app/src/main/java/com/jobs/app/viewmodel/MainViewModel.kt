@@ -69,10 +69,25 @@ class MainViewModel : ViewModel() {
             try {
                 val client = ApiClient(_uiState.value.serverAddress, _uiState.value.port.toInt())
                 if (client.testConnection()) {
-                    apiClient = client
-                    _uiState.value = _uiState.value.copy(isConnected = true)
-                    taskOffloader.initialize(client)
-                    startWorkerMonitoring()
+                    // Send work request to register as worker
+                    val resources = resourceMonitor.getCurrentResources()
+                    val workerId = "android-${android.os.Build.MODEL}-${System.currentTimeMillis()}"
+                    val capabilities = "cpuCores:${resources.cpuCores},availableMemory:${resources.availableMemoryMB},hasGpu:false"
+                    
+                    val workRequestSent = client.sendWorkRequest(
+                        workerId = workerId,
+                        workerType = "android",
+                        capabilities = capabilities
+                    )
+                    
+                    if (workRequestSent) {
+                        apiClient = client
+                        _uiState.value = _uiState.value.copy(isConnected = true)
+                        taskOffloader.initialize(client)
+                        startWorkerMonitoring()
+                    } else {
+                        // Handle work request failure
+                    }
                 } else {
                     // Handle connection failure
                 }
@@ -160,11 +175,23 @@ class MainViewModel : ViewModel() {
     }
     
     fun scanQRCode() {
-        // This would launch QR code scanner activity
-        // For now, we'll implement basic QR code scanning
-        viewModelScope.launch {
-            // TODO: Launch QR code scanner
-            // On scan result, connect to the server
+        // Launch QR code scanner
+        // This will be handled by MainActivity using CameraX and ZXing
+        _uiState.value = _uiState.value.copy(qrCodeVisible = false) // Hide QR code if showing
+    }
+    
+    fun onQRCodeScanned(connectionInfo: String) {
+        // Parse connection info from QR code (format: "IP:Port")
+        val parts = connectionInfo.split(":")
+        if (parts.size == 2) {
+            val ip = parts[0]
+            val port = parts[1]
+            _uiState.value = _uiState.value.copy(
+                serverAddress = ip,
+                port = port
+            )
+            // Automatically connect after scanning
+            connect()
         }
     }
     

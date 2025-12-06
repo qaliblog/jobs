@@ -86,7 +86,15 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         Text("Show My QR Code")
                     }
                     Button(
-                        onClick = { viewModel.scanQRCode() },
+                        onClick = { 
+                            viewModel.scanQRCode()
+                            // Request camera permission and launch scanner
+                            if (cameraPermissionState.status.isGranted) {
+                                qrCodeLauncher.launch(ScanOptions().setDesiredBarcodeFormats(com.journeyapps.barcodescanner.BarcodeFormat.QR_CODE))
+                            } else {
+                                cameraPermissionState.launchPermissionRequest()
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Scan QR Code")
