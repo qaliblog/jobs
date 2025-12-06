@@ -9,7 +9,6 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTimer>
-#include "device_list_widget.h"
 
 struct DiscoveredDevice {
     QString id;

@@ -21,7 +21,6 @@ set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/network_scanner_widget.cpp
-    src/device_list_widget.cpp
     src/connection_widget.cpp
     src/resource_monitor_widget.cpp
     src/task_status_widget.cpp
@@ -32,7 +31,6 @@ set(SOURCES
 set(HEADERS
     include/mainwindow.h
     include/network_scanner_widget.h
-    include/device_list_widget.h
     include/connection_widget.h
     include/resource_monitor_widget.h
     include/task_status_widget.h
