@@ -3,8 +3,12 @@
 #include <QHostAddress>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QImage>
 #include <QPainter>
+#include <QByteArray>
+#include <QHash>
 
 // Simple QR code generation using a basic library or manual implementation
 // For production, use a proper QR code library like qrcodegen or zxing
