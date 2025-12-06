@@ -80,6 +80,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     
+    // Permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    
     // QR Code
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
